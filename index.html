@@ -1,0 +1,865 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Alcazar Learning - Active Listening Journey</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --alcazar-orange: #FF6700;
+            --alcazar-charcoal: #38373A;
+            --alcazar-offwhite: #EAEAEA;
+            --alcazar-teal: #6BC2F1;
+            --alcazar-royal: #5E4EB9;
+            --alcazar-woods: #A98E55;
+
+            --text-light: #FFFFFF;
+            --text-dark: var(--alcazar-charcoal);
+            --background-main: #F7F9FC; /* Lighter, cleaner background */
+            --background-card: #FFFFFF;
+            
+            --shadow-soft: 0 2px 8px rgba(56, 55, 58, 0.08); /* Softer shadow based on charcoal */
+            --shadow-interactive: 0 4px 12px rgba(56, 55, 58, 0.12);
+
+            --success-color: #4CAF50; /* More vibrant green */
+            --danger-color: #F44336; /* More vibrant red */
+            --xp-color: #FFC107; 
+            --quiz-correct-bg: #E8F5E9;
+            --quiz-incorrect-bg: #FFEBEE;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        html { scroll-behavior: smooth; }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: var(--background-main);
+            color: var(--text-dark);
+            line-height: 1.7;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            font-size: 16px;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        .container {
+            width: 90%;
+            max-width: 800px; /* Optimized for single-column reading */
+            margin: 0 auto;
+            padding: 20px 0;
+            flex-grow: 1;
+        }
+
+        h1, h2, h3, h4 { color: var(--text-dark); margin-bottom: 0.8em; font-weight: 600; }
+        h1 { font-size: 1.8rem; text-align: center; color: var(--alcazar-orange); margin-bottom: 1.5em; font-weight: 700; }
+        h2 { font-size: 1.6rem; } /* Content page book title */
+        h3 { font-size: 1.2rem; } /* Book card title */
+        h4 { /* Section titles */
+            font-size: 1.1rem; 
+            color: var(--alcazar-royal); 
+            margin-bottom: 0.6em; 
+            padding-bottom: 0.4em; 
+            border-bottom: 2px solid var(--alcazar-teal); 
+            display: flex;
+            align-items: center;
+        }
+        h4 .section-icon { margin-right: 0.5em; font-size: 1.2em; }
+
+
+        p { margin-bottom: 1.3em; font-size: 0.95rem; color: #555; }
+        ul { list-style: none; padding-left: 0; }
+        ul li {
+            margin-bottom: 1em;
+            padding-left: 30px;
+            position: relative;
+            font-size: 0.95rem;
+            color: #444;
+        }
+        ul li::before {
+            content: '⭐'; /* Default star */
+            position: absolute; left: 0; color: var(--alcazar-orange); font-size: 1.1em;
+            line-height: 1.2; top: 2px;
+        }
+
+        /* --- Header & Footer --- */
+        .app-header {
+            background-color: var(--alcazar-charcoal);
+            color: var(--alcazar-offwhite);
+            padding: 12px 0;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 90%;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .logo { font-size: 1.5rem; font-weight: 700; }
+        .logo .highlight { color: var(--alcazar-orange); }
+        .progress-stats { text-align: right; font-size: 0.8rem; }
+        .progress-stats div { margin-bottom: 3px; }
+        .progress-stats #xpDisplay { color: var(--xp-color); font-weight: 700; font-size: 0.9rem; }
+        .progress-bar-container {
+            width: 80px; height: 8px; background-color: #555; border-radius: 4px;
+            overflow: hidden; display: inline-block; margin-left: 5px; vertical-align: middle;
+        }
+        .progress-bar-fill {
+            height: 100%; background-color: var(--alcazar-teal); width: 0%;
+            transition: width 0.5s ease-in-out; border-radius: 4px;
+        }
+
+        .app-footer {
+            background-color: var(--alcazar-charcoal);
+            color: var(--alcazar-offwhite);
+            text-align: center; padding: 18px 0; font-size: 0.8rem; margin-top: auto;
+        }
+
+        /* --- Page Switching --- */
+        .page { display: none; animation: slideInUp 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94); }
+        .page.active { display: block; }
+        @keyframes slideInUp { 
+            from { opacity: 0; transform: translateY(30px); } 
+            to { opacity: 1; transform: translateY(0); } 
+        }
+        @keyframes cardEnter {
+            from { opacity: 0; transform: scale(0.95) translateY(10px); }
+            to { opacity: 1; transform: scale(1) translateY(0); }
+        }
+
+        /* --- Menu Page --- */
+        .book-grid {
+            display: grid;
+            grid-template-columns: 1fr; /* Mobile first: single column */
+            gap: 20px;
+            margin-top: 20px;
+        }
+        .book-card {
+            background-color: var(--background-card);
+            border-radius: 12px;
+            box-shadow: var(--shadow-soft);
+            padding: 20px;
+            cursor: pointer;
+            transition: transform 0.25s ease, box-shadow 0.25s ease;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between; /* Pushes focus idea down */
+            min-height: 150px; /* Ensure some height even without image */
+            border-left: 5px solid var(--alcazar-teal); /* Default accent color */
+            animation: cardEnter 0.5s ease-out forwards;
+            opacity: 0; /* Start hidden for animation */
+        }
+        .book-card:nth-child(odd) { border-left-color: var(--alcazar-orange); }
+        .book-card:nth-child(3n) { border-left-color: var(--alcazar-royal); }
+
+        .book-card.completed-book {
+            border-left-color: var(--success-color);
+            background-color: #f9f9f9;
+        }
+        .book-card.completed-book h3 { color: #777; }
+        .completed-badge {
+            font-size: 0.75rem; font-weight: 600; color: var(--success-color);
+            display: inline-block; padding: 3px 8px; border-radius: 12px;
+            background-color: var(--quiz-correct-bg);
+            margin-top: 10px;
+            align-self: flex-start; /* Position badge */
+        }
+        .book-card:hover {
+            transform: translateY(-5px) scale(1.01);
+            box-shadow: var(--shadow-interactive);
+        }
+        .book-card h3 { font-size: 1.15rem; margin-bottom: 0.3em; color: var(--text-dark); font-weight: 600; }
+        .book-card .author { font-size: 0.8rem; color: #6c757d; margin-bottom: 0.8em; }
+        .book-card .focus-idea {
+            font-size: 0.9rem; color: var(--alcazar-charcoal); font-weight: 500;
+            margin-top: 10px; padding-top: 10px; border-top: 1px dashed var(--alcazar-offwhite);
+        }
+        .book-card .focus-idea strong { color: var(--alcazar-orange); }
+
+
+        /* --- Content Page --- */
+        .content-header { text-align: center; margin-bottom: 25px; padding-bottom: 15px; border-bottom: 3px solid var(--alcazar-orange); }
+        .content-header .book-title { font-size: 1.7rem; color: var(--text-dark); font-weight: 700;}
+        .content-header .book-author { font-size: 1rem; color: #555; }
+
+        .content-section {
+            background-color: var(--background-card);
+            padding: 20px; margin-bottom: 20px; border-radius: 10px;
+            box-shadow: var(--shadow-soft);
+            border-left: 4px solid var(--alcazar-teal);
+        }
+        .content-section.chapter-insight { border-left-color: var(--alcazar-royal); }
+        .content-section.chapter-insight h4 .section-icon { content: '🌟'; }
+        .content-section.concept { border-left-color: var(--alcazar-woods); }
+        .content-section.concept h4 .section-icon { content: '🎯'; }
+        .content-section.key-takeaways { border-left-color: var(--alcazar-orange); background-color: #FFF8F0; }
+        .content-section.key-takeaways h4 .section-icon { content: '🔑'; }
+        .content-section.tools-achieve { border-left-color: var(--alcazar-teal); }
+        .content-section.tools-achieve h4 .section-icon { content: '🛠️'; }
+        .content-section.reflect-practice { border-left-color: var(--alcazar-royal); background-color: #F8F8FF; }
+        .content-section.reflect-practice h4 .section-icon { content: '🤔'; }
+
+        .action-button, .back-button-bottom {
+            display: block; width: 100%; text-align: center;
+            color: var(--text-light); border: none;
+            padding: 13px 20px; border-radius: 8px; cursor: pointer;
+            font-size: 1rem; font-weight: 600; margin-top: 25px;
+            transition: background-color 0.2s ease, transform 0.15s ease, box-shadow 0.2s ease;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .action-button { background-color: var(--success-color); }
+        .action-button:hover { background-color: #388E3C; transform: translateY(-2px); box-shadow: var(--shadow-interactive); }
+        .action-button:disabled { background-color: #AAA; cursor: not-allowed; transform: translateY(0); box-shadow: none;}
+
+        .back-button-bottom {
+            background-color: var(--alcazar-orange);
+            margin-top: 30px; /* More space before this button */
+        }
+        .back-button-bottom:hover { background-color: #E65C00; transform: translateY(-2px); box-shadow: var(--shadow-interactive); }
+        
+
+        /* Quiz Section */
+        .quiz-section { border-left-color: var(--alcazar-woods); background-color: #FFFDF5; }
+        .quiz-section h4 { color: var(--alcazar-woods); border-bottom-color: var(--alcazar-woods); }
+        .quiz-section h4 .section-icon { content: '❓'; }
+        .quiz-question { font-weight: 600; margin-bottom: 15px; font-size: 1rem; }
+        .quiz-options label {
+            display: block; background-color: var(--background-card);
+            padding: 12px 15px; margin-bottom: 10px; border-radius: 8px;
+            cursor: pointer; border: 1px solid var(--alcazar-offwhite);
+            transition: background-color 0.2s ease, border-color 0.2s ease, transform 0.1s ease;
+            font-size: 0.9rem;
+        }
+        .quiz-options label:hover { background-color: var(--alcazar-offwhite); border-color: #ccc; transform: translateX(3px);}
+        .quiz-options input[type="radio"] { margin-right: 10px; accent-color: var(--alcazar-orange); transform: scale(1.1); }
+        
+        .quiz-feedback {
+            padding: 12px 15px; margin-top: 15px; border-radius: 6px; font-weight: 500;
+            font-size: 0.9rem; border-width: 1px; border-style: solid;
+        }
+        .quiz-feedback.correct { background-color: var(--quiz-correct-bg); color: #2E7D32; border-color: #A5D6A7; }
+        .quiz-feedback.incorrect { background-color: var(--quiz-incorrect-bg); color: #C62828; border-color: #EF9A9A; }
+        .quiz-feedback.warning { background-color: #FFF9C4; color: #F57F17; border-color: #FFEE58; }
+
+        #submitQuizButton {
+            background-color: var(--alcazar-royal); margin-top: 12px;
+            font-size: 0.95rem; padding: 10px 18px;
+        }
+        #submitQuizButton:hover { background-color: #4A00E0; }
+
+        /* XP Animation */
+        .xp-popup {
+            position: fixed;
+            top: 20px; /* Positioned at the top */
+            left: 50%;
+            transform: translateX(-50%) translateY(-100%); /* Start off-screen */
+            background-color: var(--xp-color);
+            color: var(--alcazar-charcoal);
+            padding: 10px 25px;
+            border-radius: 20px;
+            font-size: 1.1rem;
+            font-weight: 700;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.2);
+            opacity: 0;
+            transition: opacity 0.3s ease, transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); /* Bounce effect */
+            z-index: 2000;
+        }
+        .xp-popup.show {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
+
+
+        /* --- Responsive --- */
+        @media (min-width: 600px) { /* For slightly larger screens, 2-column grid */
+            .book-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 25px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            body { font-size: 15px; }
+            .logo { font-size: 1.3rem; }
+            .progress-stats { font-size: 0.75rem; }
+            .progress-stats #xpDisplay { font-size: 0.85rem; }
+            h1 { font-size: 1.5rem; }
+            .content-header .book-title { font-size: 1.4rem; }
+            h4 { font-size: 1rem; }
+            ul li, p { font-size: 0.9rem; }
+            .action-button, .back-button-bottom { font-size: 0.95rem; padding: 12px 18px; }
+            .quiz-options label { font-size: 0.85rem; }
+            #submitQuizButton { font-size: 0.9rem; }
+        }
+
+    </style>
+</head>
+<body>
+
+    <header class="app-header">
+        <div class="header-content">
+            <div class="logo">ALCAZAR <span class="highlight">LEARNING</span></div>
+            <div class="progress-stats">
+                <div>XP: <span id="xpDisplay">0</span></div>
+                <div>Progress: <span id="progressText">0/9</span>
+                    <div class="progress-bar-container">
+                        <div id="progressBarFill" class="progress-bar-fill"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="container">
+        <section id="menu-page" class="page active">
+            <h1>Active Listening Journey</h1>
+            <div class="book-grid" id="bookGrid">
+                <!-- Book cards will be generated by JS -->
+            </div>
+        </section>
+
+        <section id="content-page" class="page">
+            <!-- Back button removed from top -->
+            <div class="content-header">
+                <h2 id="contentBookTitle" class="book-title"></h2>
+                <p id="contentBookAuthor" class="book-author"></p>
+            </div>
+            <div id="bookDetailsContainer">
+                <!-- Book details sections -->
+            </div>
+            <button id="markAsReadButton" class="action-button">Mark as Explored & Claim XP</button>
+            <button class="back-button-bottom" id="backButtonBottom">&larr; Back to Journey Menu</button>
+        </section>
+    </main>
+
+    <footer class="app-footer">
+        Alcazar Learning, a subsidiary of Alcazar Systems Pty Ltd &copy; <span id="currentYear"></span>
+    </footer>
+
+    <div id="xpPopup" class="xp-popup"></div>
+
+    <script>
+        // Book data - coverImage property is no longer used for display
+        // Content remains the same as your last elaborated version
+        const booksData = [
+             {
+                id: "maxwell",
+                title: "Everyone Communicates, Few Connect",
+                author: "John C. Maxwell",
+                // coverImage: "...", // Not used for display
+                focusIdea: "Connect on the Emotional Level",
+                intro: "John C. Maxwell's core insight is that while many people exchange information, genuine connection—the kind that fosters understanding and influence—occurs primarily on an emotional plane. He posits that active listening isn't just hearing words, but is the essential bridge allowing ideas and feelings to travel effectively between individuals, moving beyond superficial interaction.",
+                what: "Effective listening, as Maxwell describes it, is far more than passive reception. It demands your full mental and emotional presence, requiring you to engage deeply with both the spoken words and the often more telling silent cues, such as body language and tone, to truly grasp the speaker's message.",
+                how: ["Initiate a 'listening tour' regularly: Schedule dedicated one-on-one time with individuals in your circle. During these sessions, focus on paraphrasing their thoughts to ensure understanding, asking clarifying questions to delve deeper, and consciously withholding your own anecdotes or solutions unless specifically invited. This practice cultivates a space where others feel truly heard."],
+                keyTakeaways: [
+                    "True connection transcends information exchange; it's rooted in emotional understanding.",
+                    "Active listening is the indispensable conduit for meaningful two-way communication.",
+                    "Full mental engagement, including attention to non-verbal cues, is vital for effective listening."
+                ],
+                reflectPractice: ["When did you last experience a conversation where you felt a genuine, deep connection? What specific actions were you or the other person taking that contributed to this feeling?", "Identify one person in your professional or personal life this week who might greatly benefit from you dedicating a focused 'listening tour' slot to them. How might this impact your relationship?", "After each 'listening tour' session, summarize in one sentence your understanding of their perspective or world. Do this as an objective observation, without personal commentary or judgment."],
+                xpValue: 10,
+                quiz: {
+                    question: "According to John C. Maxwell, what is the primary level at which true connection happens?",
+                    options: ["The intellectual and logical level", "The level of shared information and facts", "The emotional level, through empathetic engagement", "The level of professional hierarchy"],
+                    correctAnswer: "The emotional level, through empathetic engagement",
+                    explanation: "Maxwell emphasizes that genuine connection occurs when we meet people on an emotional level, not just an informational one."
+                }
+            },
+            {
+                id: "reklau",
+                title: "How to Become a People Magnet",
+                author: "Marc Reklau",
+                focusIdea: "Actively Listen to Signal Respect",
+                intro: "Marc Reklau demystifies the idea of 'magnetism,' arguing it's not an innate quality but rather the result of consistently practicing specific micro-behaviors. He highlights that actions like making eye contact, showing attentiveness, and expressing genuine curiosity are powerful signals of respect, which in turn draw people towards you.",
+                what: "In Reklau's view, active listening serves as the most unambiguous demonstration that you genuinely value someone's contribution and perspective. It's a tangible way to show them that their thoughts and feelings matter to you, fostering a sense of importance and validation in the speaker.",
+                how: ["Practice attentive presence: Maintain soft, comfortable eye contact to show you're engaged. Lean in slightly to convey interest. Crucially, actively work to silence the 'next-reply' script that often runs in our heads, allowing you to fully absorb what's being said. Show your engagement through affirming nods or well-timed, relevant questions."],
+                keyTakeaways: [
+                    "Personal 'magnetism' is built through consistent, respectful micro-behaviors, not inherent charm.",
+                    "Active listening is the clearest and most direct way to prove you value another person's input.",
+                    "Conscious non-verbal cues (eye contact, posture) and silencing internal monologue are key to active listening."
+                ],
+                reflectPractice: ["Reflect on your common conversational habits. Is there a physical habit (e.g., fidgeting, frequently checking your phone, looking away) that might be detracting from your perceived presence and respect for the speaker?", "Choose one conversation today where your sole objective is to learn and understand, not to formulate a response or share your own story. How did this shift in intention feel, and what did you observe?", "On a scale of 1 to 10, how would you rate the warmth and engagement conveyed by your typical non-verbal signals? What one small adjustment (e.g., more consistent eye contact, a more open posture) could potentially lift this rating by a point?"],
+                xpValue: 10,
+                quiz: {
+                    question: "Marc Reklau suggests that 'magnetism' is primarily the cumulative effect of what?",
+                    options: ["Innate charisma and charm", "Dominating conversations effectively", "Micro-behaviours that signal respect, like active listening", "Having a wide range of interesting stories"],
+                    correctAnswer: "Micro-behaviours that signal respect, like active listening",
+                    explanation: "Reklau argues that magnetism is built from consistent micro-behaviours like eye contact, attentiveness, and curiosity that signal respect."
+                }
+            },
+             {
+                id: "carnegie",
+                title: "How to Win Friends & Influence People",
+                author: "Dale Carnegie",
+                focusIdea: "Be a Genuinely Good Listener",
+                intro: "Dale Carnegie's timeless classic underscores a fundamental truth about human interaction: the most effective path to building rapport and influence is through genuine, heartfelt curiosity about others. People naturally open up and respond positively when they feel truly heard and understood by an attentive listener.",
+                what: "Carnegie's philosophy is that every individual you meet possesses unique knowledge or experiences from which you can learn. The key to unlocking this potential is to create an environment where they feel comfortable and encouraged to share by actively listening and letting them talk without interruption or judgment.",
+                how: ["Cultivate inquisitive listening: Ask open-ended questions that invite detailed responses and that the speaker will genuinely enjoy answering. Once they begin sharing, provide your undivided attention—this means no interruptions, no trying to one-up their story with your own, and no premature problem-solving. Simply listen to understand."],
+                keyTakeaways: [
+                    "Genuine curiosity about others is the cornerstone of building strong rapport and influence.",
+                    "Making others feel heard and valued through good listening encourages them to open up.",
+                    "Ask open-ended questions and provide undivided, non-judgmental attention."
+                ],
+                reflectPractice: ["Think about your social or professional circle. Whose name comes to mind when you consider, 'I've never truly taken the time to hear their full story or understand their perspective deeply'?", "At your next social gathering or meeting, make a conscious effort to speak less than 30% of the time. Focus instead on listening to others. How did this change the dynamic of your interactions? What did you observe?", "After practicing more focused listening, what was the most surprising or insightful thing you discovered from someone that you might have otherwise missed?"],
+                xpValue: 10,
+                quiz: {
+                    question: "Dale Carnegie emphasizes that the fastest route to rapport involves what key quality?",
+                    options: ["Asserting your opinions strongly", "Sharing your accomplishments", "Genuine curiosity and good listening", "Offering unsolicited advice"],
+                    correctAnswer: "Genuine curiosity and good listening",
+                    explanation: "Carnegie's classic teaches that genuine curiosity and being a good listener are paramount for building rapport."
+                }
+            },
+            {
+                id: "voss",
+                title: "Never Split the Difference",
+                author: "Chris Voss",
+                focusIdea: "Employ Tactical Empathy",
+                intro: "Chris Voss, drawing from his extensive experience as an FBI hostage negotiator, reveals how calm, steady, and strategically empathetic listening can effectively defuse tension and create openings for resolution in high-stakes situations where logic alone often fails. It's about understanding the 'other side's' feelings and worldview.",
+                what: "Voss defines tactical empathy as the deliberate act of recognizing and verbally acknowledging the emotions and perspectives of the other party. This form of active listening aims to soothe heightened emotions, build crucial trust, and make the other person more receptive, especially during difficult or confrontational conversations.",
+                how: ["Practice measured communication: Speak at a calm, measured pace. Utilize 'mirroring' by repeating the last few words (or the critical ones) of what the other person said. Sprinkle in 'labels' to articulate their perceived emotions (e.g., 'It sounds like you feel...'). Use confirming cues like 'I see' or 'That makes sense,' all while maintaining a low, slow, and reassuring tone of voice."],
+                keyTakeaways: [
+                    "Tactical empathy involves actively understanding and acknowledging the other person's emotions and perspective.",
+                    "Calm, strategic listening can de-escalate tension and build trust more effectively than pure logic in negotiations.",
+                    "Techniques like mirroring, labeling emotions, and maintaining a measured tone are central to tactical empathy."
+                ],
+                reflectPractice: ["Recall a recent disagreement or difficult conversation. Which emotions were most dominant in your own listening process? Were you focused on understanding the other's emotion, or on formulating your counter-argument?", "With a friend or colleague, practice Voss's 'mirror and label' technique. Ask them to share something they're passionate or concerned about. Try mirroring key phrases and labeling their emotions. Discuss how it felt for both of you.", "What physical or mental cues signal to you that you're starting to rush a conversation or feel pressured? How can you develop a trigger to consciously slow down and re-engage tactical empathy in those moments?"],
+                xpValue: 10,
+                quiz: {
+                    question: "According to Chris Voss, what is a key outcome of using 'Tactical Empathy' in negotiations?",
+                    options: ["Quickly proving your logical superiority", "Asserting control over the conversation", "Defusing tension and building trust with the other party", "Forcing the other party to concede quickly"],
+                    correctAnswer: "Defusing tension and building trust with the other party",
+                    explanation: "Voss teaches that Tactical Empathy is crucial for de-escalating tension, understanding the counterpart, and building trust for better outcomes."
+                }
+            },
+            {
+                id: "scott",
+                title: "Radical Candor",
+                author: "Kim Malone Scott",
+                focusIdea: "Flex Between Quiet & Loud Listening",
+                intro: "Kim Malone Scott positions listening as the vital spark that ignites her seven-step collaboration loop, essential for effective leadership. She makes a key distinction between 'quiet listening' (creating space for others) and 'loud listening' (offering strong viewpoints to challenge or clarify), urging leaders to develop the ability to flex appropriately between these modes.",
+                what: "Scott's concept emphasizes that great managers don't have a one-size-fits-all listening approach. Instead, they skillfully tailor their listening style—be it quiet or loud—to the specific context of the conversation, the needs of their team members, and their readiness to hear different types of input.",
+                how: ["Adapt your listening style: If you sense that silence or hesitancy is suffocating your team's input, proactively introduce a strong viewpoint or a challenging question (loud listening) to stimulate discussion. Conversely, if you perceive that your directness or challenge is intimidating others, consciously step back, hold space, and simply listen to understand without immediate interjection (quiet listening). The goal is to ensure every voice has a chance to surface and contribute."],
+                keyTakeaways: [
+                    "Listening is the foundational element that drives effective collaboration.",
+                    "Leaders must skillfully alternate between 'quiet listening' (holding space) and 'loud listening' (offering perspectives).",
+                    "The choice of listening style should be adapted to the specific context and the audience's readiness."
+                ],
+                reflectPractice: ["Consider your natural communication style. Do you tend more towards 'quiet listening' or 'loud listening'? In what specific situations has your dominant style been particularly helpful, and where might it have been a hindrance?", "During your next team meeting or group discussion, consciously observe who speaks the least. Think about how you can genuinely and respectfully invite their perspective into the conversation without putting them on the spot.", "What is one go-to phrase or question you can develop to open up debate or invite differing viewpoints without inadvertently dominating the conversation or shutting others down?"],
+                xpValue: 10,
+                quiz: {
+                    question: "Kim Malone Scott's 'Radical Candor' advocates for leaders to flex between which two primary listening styles?",
+                    options: ["Active vs. Passive Listening", "Empathetic vs. Critical Listening", "Quiet Listening vs. Loud Listening", "Formal vs. Informal Listening"],
+                    correctAnswer: "Quiet Listening vs. Loud Listening",
+                    explanation: "Scott distinguishes between 'quiet listening' (creating space) and 'loud listening' (offering strong viewpoints) as essential for effective leaders."
+                }
+            },
+            {
+                id: "murphy",
+                title: "You're Not Listening",
+                author: "Kate Murphy",
+                focusIdea: "Embrace The Power of the Pause",
+                intro: "Kate Murphy astutely observes that our modern culture tends to lionize speaking and quick responses, often at the expense of true understanding. She argues that real depth in communication, however, emerges from the intentional pauses we allow in conversation and the thoughtful responses we shape *after* we've fully absorbed what has been said.",
+                what: "Effective listening, according to Murphy, is marked not just by hearing words, but by offering supportive, constructive responses that demonstrate genuine comprehension. Crucially, it also involves a comfort with silence, recognizing that pauses are opportunities for deeper reflection and for the speaker to elaborate further.",
+                how: ["Cultivate comfortable silence: After someone speaks, offer brief verbal acknowledgments like nods or a soft 'mm-hmm.' Then, consciously let silence hang for a moment. This 'breathing room' often allows the speaker to unfold additional layers of their thoughts or feelings that a quick interjection would have suppressed."],
+                keyTakeaways: [
+                    "Modern culture often undervalues listening in favor of speaking, yet depth comes from thoughtful pauses.",
+                    "Supportive, constructive responses and a comfort with silence are hallmarks of effective listening.",
+                    "Allowing silence gives speakers space to elaborate and reveal deeper layers of thought."
+                ],
+                reflectPractice: ["Pay attention to pauses in your conversations today. How long does a pause need to be before it starts to feel 'too long' or uncomfortable for you? Try timing one such pause and consciously sit with any discomfort it brings.", "In your next significant conversation, make a deliberate effort to wait two full seconds after the other person finishes speaking before you offer your response. What, if anything, emerged in that brief silence from either you or the other person?", "By practicing more attentive pausing, what fresh detail, nuance, or underlying emotion surfaced in a conversation that you suspect you might normally have missed?"],
+                xpValue: 10,
+                quiz: {
+                    question: "Kate Murphy, in 'You're Not Listening,' argues that true depth in communication often comes from what?",
+                    options: ["Speaking eloquently and persuasively", "The strategic use of humor", "The pauses we allow and comfort with silence", "Immediately challenging the speaker's points"],
+                    correctAnswer: "The pauses we allow and comfort with silence",
+                    explanation: "Murphy emphasizes that allowing pauses and being comfortable with silence are crucial for achieving depth in communication."
+                }
+            },
+            {
+                id: "covey",
+                title: "The 7 Habits of Highly Effective People",
+                author: "Stephen R. Covey",
+                focusIdea: "Habit 5: Seek First to Understand, Then to Be Understood",
+                intro: "Stephen R. Covey's influential Habit 5, 'Seek First to Understand, Then to Be Understood,' positions empathic listening as an indispensable prerequisite for creating win-win solutions. It's about a fundamental paradigm shift: committing to seeing the world through another person's eyes *before* attempting to convey your own perspective or agenda.",
+                what: "Empathic listening, as Covey defines it, goes beyond merely hearing the words spoken. It involves a deeper engagement to understand the emotions, intent, and underlying interests behind those words. This holistic approach is key to uncovering what truly matters to the other person, paving the way for mutual understanding.",
+                how: ["Develop empathic listening skills: Actively people-watch to become more adept at decoding body language and non-verbal cues. In disagreements or debates, make it a practice to accurately restate the other person's viewpoint to their satisfaction before presenting your own. Regularly solicit feedback on your listening skills from trusted sources to identify areas for improvement."],
+                keyTakeaways: [
+                    "Empathic listening (Habit 5) means prioritizing understanding the other's perspective before expressing your own.",
+                    "This habit is foundational for achieving mutually beneficial (win-win) outcomes.",
+                    "True understanding involves listening for both the words spoken and the emotions and interests behind them."
+                ],
+                reflectPractice: ["Observe two strangers conversing (e.g., in a café, park). Without hearing their words, what emotions or dynamics do their gestures, posture, and expressions seem to reveal about their interaction?", "In your next disagreement, however minor, begin your response with a phrase like, 'Let me see if I've got this right...' and then summarize their stance as accurately as possible. How do they react to this approach?", "Ask a trusted friend or colleague tomorrow: 'On a scale of 1 to 10, how genuinely heard and understood do you feel when we talk?' Note their score and any accompanying feedback. This can be a powerful insight."],
+                xpValue: 10,
+                quiz: {
+                    question: "What is the core principle of Habit 5 in 'The 7 Habits of Highly Effective People'?",
+                    options: ["Be proactive and take initiative", "Begin with the end in mind and set clear goals", "Seek first to understand, then to be understood", "Synergize and work collaboratively"],
+                    correctAnswer: "Seek first to understand, then to be understood",
+                    explanation: "Habit 5 is 'Seek First to Understand, Then to Be Understood,' emphasizing the critical role of empathic listening."
+                }
+            },
+            {
+                id: "giblin",
+                title: "The Art of Dealing With People",
+                author: "Les T. Giblin",
+                focusIdea: "Make Others Feel Important Through Listening",
+                intro: "Les Giblin compellingly argues that one of the deepest and most universal human hungers is the desire to feel important and valued. He suggests that attentive, intentional listening is one of the most immediate and powerful ways to satisfy this fundamental need in others, thereby strengthening relationships.",
+                what: "According to Giblin, the process of making others feel genuinely valued and significant begins with the practice of intentional listening. It's not just about hearing them, but about conveying through your attention that their thoughts, feelings, and experiences matter to you.",
+                how: ["Demonstrate you've listened: Offer sincere and appropriate eye contact. Make an effort to recall prior details they've shared in past conversations and reference them when relevant. Consider a brief follow-up later on something they mentioned; this act powerfully proves that you were not only listening but also retained and valued what they said."],
+                keyTakeaways: [
+                    "A core human desire is to feel important; attentive listening directly addresses this need.",
+                    "Making others feel valued is a key outcome of intentional, focused listening.",
+                    "Actions like sincere eye contact, recalling shared details, and following up demonstrate genuine listening."
+                ],
+                reflectPractice: ["Think about recent conversations. What's one personal detail someone shared with you (a hobby, a concern, a small achievement) that you could thoughtfully reference in your next chat with them to show you were listening?", "Experiment with ending a meaningful conversation by saying something like, 'Thank you for sharing that with me—I really appreciate you taking the time.' Observe if there's any change in their posture, expression, or overall demeanor.", "Brainstorm three subtle, non-monetary ways you can show someone they matter to you through your communication. How can listening play a role in each?"],
+                xpValue: 10,
+                quiz: {
+                    question: "Les Giblin states that attentive listening instantly feeds what deep human hunger?",
+                    options: ["The need for new information", "The desire for entertainment and amusement", "The hunger to feel important and valued", "The drive for competition and achievement"],
+                    correctAnswer: "The hunger to feel important and valued",
+                    explanation: "Giblin argues that attentive listening is a powerful way to make others feel important, satisfying a fundamental human need."
+                }
+            },
+            {
+                id: "fexeus",
+                title: "The Art of Reading Minds",
+                author: "Henrik Fexeus",
+                focusIdea: "Presence and Non-Verbal Cues are Key to Listening",
+                intro: "Henrik Fexeus makes a strong case that the ability to accurately decode non-verbal cues—a crucial aspect of understanding others—is virtually impossible without cultivating full presence and mental stillness. He positions deep listening as the essential gateway to achieving this state of focused awareness.",
+                what: "Fexeus's approach combines active listening with keen, moment-to-moment observation. This synergy unlocks the ability to perceive subtle, often unconscious, non-verbal signals from others, which in turn significantly deepens trust and understanding in interpersonal dynamics.",
+                how: ["Train your presence and observation: During conversations, consciously focus your attention on subtle shifts in the speaker's tone of voice, their breathing patterns, and fleeting micro-expressions. Practice suspending your own internal commentary and an impending desire to respond, allowing you to be fully receptive to all cues, both verbal and non-verbal."],
+                keyTakeaways: [
+                    "Decoding non-verbal cues accurately requires complete mental presence and stillness.",
+                    "Deep listening is the gateway to achieving the focused awareness needed for observation.",
+                    "Combining active listening with keen observation of non-verbal signals unlocks hidden meanings and deepens trust."
+                ],
+                reflectPractice: ["Identify a friend or family member whose body language you find particularly expressive. Observe them quietly (without being intrusive) for just one minute during a natural interaction. What new micro-gesture or subtle non-verbal cue did you spot that you hadn't noticed before?", "In your next casual conversation, try to subtly match your breathing pace to that of the speaker. Did you notice any shift in the rapport or connection between you?", "At the end of the day, make a mental note of three distinct non-verbal cues you picked up from different people. What did those cues suggest to you about their underlying thoughts or feelings?"],
+                xpValue: 10,
+                quiz: {
+                    question: "Henrik Fexeus emphasizes that decoding non-verbal cues effectively is impossible without what?",
+                    options: ["Learning a complex system of gestures", "Full presence and mental stillness", "Specialized technological tools", "Asking direct questions about body language"],
+                    correctAnswer: "Full presence and mental stillness",
+                    explanation: "Fexeus teaches that full presence is paramount for accurately interpreting non-verbal cues, with listening being the gateway to this state."
+                }
+            }
+        ];
+
+
+        // --- Global Variables & State ---
+        let appState = {
+            totalXP: 0,
+            books: booksData.map(book => ({ 
+                id: book.id, 
+                completed: false, 
+                quizCompleted: false, 
+                quizCorrect: false 
+            }))
+        };
+        let currentBookId = null;
+
+        // --- DOM Elements ---
+        const bookGrid = document.getElementById('bookGrid');
+        const menuPage = document.getElementById('menu-page');
+        const contentPage = document.getElementById('content-page');
+        const contentBookTitle = document.getElementById('contentBookTitle');
+        const contentBookAuthor = document.getElementById('contentBookAuthor');
+        const bookDetailsContainer = document.getElementById('bookDetailsContainer');
+        const markAsReadButton = document.getElementById('markAsReadButton');
+        const backButtonBottom = document.getElementById('backButtonBottom');
+        const currentYearSpan = document.getElementById('currentYear');
+        const xpDisplay = document.getElementById('xpDisplay');
+        const progressText = document.getElementById('progressText');
+        const progressBarFill = document.getElementById('progressBarFill');
+        const xpPopup = document.getElementById('xpPopup');
+
+        // --- State Management ---
+        function saveState() {
+            localStorage.setItem('alcazarListeningJourneyState', JSON.stringify(appState));
+        }
+
+        function loadState() {
+            const savedState = localStorage.getItem('alcazarListeningJourneyState');
+            if (savedState) {
+                const parsedState = JSON.parse(savedState);
+                // Merge with default structure to handle new books or properties
+                appState.totalXP = parsedState.totalXP || 0;
+                appState.books = booksData.map(bookDef => {
+                    const savedBook = parsedState.books ? parsedState.books.find(b => b.id === bookDef.id) : null;
+                    return {
+                        id: bookDef.id,
+                        completed: savedBook ? savedBook.completed : false,
+                        quizCompleted: savedBook ? savedBook.quizCompleted : false,
+                        quizCorrect: savedBook ? savedBook.quizCorrect : false,
+                    };
+                });
+                 if (typeof appState.totalXP !== 'number' || isNaN(appState.totalXP)) {
+                    appState.totalXP = 0;
+                }
+            }
+        }
+
+        // --- UI Updates ---
+        function updateGlobalProgress() {
+            xpDisplay.textContent = appState.totalXP;
+            const completedCount = appState.books.filter(b => b.completed).length;
+            progressText.textContent = `${completedCount}/${booksData.length}`;
+            const progressPercentage = booksData.length > 0 ? (completedCount / booksData.length) * 100 : 0;
+            progressBarFill.style.width = `${progressPercentage}%`;
+        }
+        
+        function showXPPopup(amount) {
+            xpPopup.textContent = `+${amount} XP!`;
+            xpPopup.classList.add('show');
+            setTimeout(() => {
+                xpPopup.classList.remove('show');
+            }, 2000); // Adjusted duration
+        }
+
+        // --- Dynamic Content Creation ---
+        function createBookCard(book, index) {
+            const card = document.createElement('div');
+            card.className = 'book-card';
+            card.dataset.bookId = book.id;
+            card.style.animationDelay = `${index * 0.07}s`; // Stagger animation
+
+            const bookStatus = appState.books.find(b => b.id === book.id);
+            if (bookStatus && bookStatus.completed) {
+                card.classList.add('completed-book');
+            }
+
+            const title = document.createElement('h3');
+            title.textContent = book.title;
+
+            const author = document.createElement('p');
+            author.className = 'author';
+            author.textContent = `by ${book.author}`;
+
+            const focusIdea = document.createElement('p');
+            focusIdea.className = 'focus-idea';
+            focusIdea.innerHTML = `<strong>Focus:</strong> ${book.focusIdea}`;
+            
+            card.appendChild(title);
+            card.appendChild(author);
+            card.appendChild(focusIdea); // Focus idea before badge
+
+            if (bookStatus && bookStatus.completed) {
+                 const badge = document.createElement('span');
+                 badge.className = 'completed-badge';
+                 badge.textContent = 'Explored ✔';
+                 card.appendChild(badge);
+            }
+
+
+            card.addEventListener('click', () => showBookDetails(book.id));
+            return card;
+        }
+
+        function populateMenu() {
+            bookGrid.innerHTML = '';
+            booksData.forEach((book, index) => {
+                const card = createBookCard(book, index);
+                bookGrid.appendChild(card);
+            });
+        }
+        
+        function getSectionIcon(className) {
+            if (className.includes('chapter-insight')) return '🌟';
+            if (className.includes('concept')) return '🎯';
+            if (className.includes('key-takeaways')) return '🔑';
+            if (className.includes('tools-achieve')) return '🛠️';
+            if (className.includes('reflect-practice')) return '🤔';
+            if (className.includes('quiz-section')) return '❓';
+            return '🔹'; // Default
+        }
+
+
+        function createSection(title, contentOrListItems, className = '', isList = false) {
+            const sectionDiv = document.createElement('div');
+            sectionDiv.className = `content-section ${className}`;
+            const heading = document.createElement('h4');
+            const iconSpan = document.createElement('span');
+            iconSpan.className = 'section-icon';
+            iconSpan.textContent = getSectionIcon(className);
+            heading.appendChild(iconSpan);
+            heading.appendChild(document.createTextNode(title));
+            sectionDiv.appendChild(heading);
+
+            if (isList) {
+                const ul = document.createElement('ul');
+                contentOrListItems.forEach(itemText => {
+                    const li = document.createElement('li');
+                    li.innerHTML = itemText;
+                    ul.appendChild(li);
+                });
+                sectionDiv.appendChild(ul);
+            } else {
+                const p = document.createElement('p');
+                p.innerHTML = contentOrListItems; 
+                sectionDiv.appendChild(p);
+            }
+            return sectionDiv;
+        }
+
+        function createQuizSection(book) {
+            const bookState = appState.books.find(b => b.id === book.id);
+            if (!book.quiz) return document.createDocumentFragment();
+
+            const quizSectionDiv = createSection("Test Your Understanding", "", "quiz-section");
+            quizSectionDiv.innerHTML = quizSectionDiv.querySelector('h4').outerHTML; // Keep heading, clear rest for rebuild
+
+            const feedbackDiv = document.createElement('div');
+            feedbackDiv.className = 'quiz-feedback';
+            feedbackDiv.id = `quiz-feedback-${book.id}`;
+            feedbackDiv.style.display = 'none'; // Hidden initially
+
+            if (bookState && bookState.quizCompleted) {
+                const resultText = bookState.quizCorrect ? 
+                    `You answered correctly! ${book.quiz.explanation}` : 
+                    `You attempted the quiz. The correct answer was: "${book.quiz.correctAnswer}". ${book.quiz.explanation}`;
+                feedbackDiv.textContent = resultText;
+                feedbackDiv.classList.add(bookState.quizCorrect ? 'correct' : 'incorrect');
+                feedbackDiv.style.display = 'block';
+                quizSectionDiv.appendChild(feedbackDiv);
+                return quizSectionDiv;
+            }
+
+            const questionP = document.createElement('p');
+            questionP.className = 'quiz-question';
+            questionP.textContent = book.quiz.question;
+            quizSectionDiv.appendChild(questionP);
+
+            const optionsDiv = document.createElement('div');
+            optionsDiv.className = 'quiz-options';
+            book.quiz.options.forEach((option, index) => {
+                const label = document.createElement('label');
+                const input = document.createElement('input');
+                input.type = 'radio';
+                input.name = `quiz-${book.id}`;
+                input.value = option;
+                input.id = `quiz-${book.id}-option-${index}`;
+                const span = document.createElement('span');
+                span.textContent = option;
+                label.appendChild(input);
+                label.appendChild(span);
+                optionsDiv.appendChild(label);
+            });
+            quizSectionDiv.appendChild(optionsDiv);
+
+            const submitButton = document.createElement('button');
+            submitButton.id = 'submitQuizButton';
+            submitButton.className = 'action-button';
+            submitButton.textContent = 'Submit Answer';
+            submitButton.addEventListener('click', () => handleQuizSubmit(book));
+            quizSectionDiv.appendChild(submitButton);
+            quizSectionDiv.appendChild(feedbackDiv);
+            return quizSectionDiv;
+        }
+
+        function handleQuizSubmit(book) {
+            const selectedOption = document.querySelector(`input[name="quiz-${book.id}"]:checked`);
+            const feedbackDiv = document.getElementById(`quiz-feedback-${book.id}`);
+            const submitButton = document.getElementById('submitQuizButton');
+
+            feedbackDiv.style.display = 'block'; // Make sure it's visible
+            if (!selectedOption) {
+                feedbackDiv.textContent = 'Please select an answer.';
+                feedbackDiv.className = 'quiz-feedback warning';
+                return;
+            }
+
+            const bookState = appState.books.find(b => b.id === book.id);
+            bookState.quizCompleted = true;
+            const isCorrect = selectedOption.value === book.quiz.correctAnswer;
+            bookState.quizCorrect = isCorrect;
+
+            if (isCorrect) {
+                feedbackDiv.textContent = `Correct! ${book.quiz.explanation} (+5 XP Bonus!)`;
+                feedbackDiv.className = 'quiz-feedback correct';
+                appState.totalXP += 5;
+                showXPPopup(5);
+            } else {
+                feedbackDiv.textContent = `Incorrect. The correct answer was: "${book.quiz.correctAnswer}". ${book.quiz.explanation}`;
+                feedbackDiv.className = 'quiz-feedback incorrect';
+            }
+            
+            if(submitButton) submitButton.style.display = 'none';
+            document.querySelectorAll(`input[name="quiz-${book.id}"]`).forEach(rb => rb.disabled = true);
+
+            updateGlobalProgress();
+            saveState();
+        }
+
+        // --- Page Navigation ---
+        function showBookDetails(bookId) {
+            currentBookId = bookId;
+            const book = booksData.find(b => b.id === bookId);
+            if (!book) return;
+
+            contentBookTitle.textContent = book.title;
+            contentBookAuthor.textContent = `by ${book.author}`;
+            bookDetailsContainer.innerHTML = ''; 
+
+            bookDetailsContainer.appendChild(createSection('Chapter Insight', book.intro, 'chapter-insight'));
+            bookDetailsContainer.appendChild(createSection('What (Concept)', book.what, 'concept'));
+            if (book.keyTakeaways && book.keyTakeaways.length > 0) {
+                 bookDetailsContainer.appendChild(createSection('Key Takeaways', book.keyTakeaways, 'key-takeaways', true));
+            }
+            bookDetailsContainer.appendChild(createSection('How (Tools to Achieve)', book.how, 'tools-achieve', true));
+            bookDetailsContainer.appendChild(createSection("Reflect & Practice", book.reflectPractice, 'reflect-practice', true));
+            bookDetailsContainer.appendChild(createQuizSection(book));
+
+            const bookStatus = appState.books.find(b => b.id === bookId);
+            markAsReadButton.disabled = bookStatus ? bookStatus.completed : false;
+            markAsReadButton.textContent = (bookStatus && bookStatus.completed) ? 'Content Explored' : `Mark as Explored & Claim ${book.xpValue || 10} XP`;
+
+            menuPage.classList.remove('active');
+            contentPage.classList.add('active');
+            window.scrollTo(0, 0);
+        }
+
+        function showMenu() {
+            currentBookId = null;
+            contentPage.classList.remove('active');
+            menuPage.classList.add('active');
+            populateMenu(); // Repopulate for status changes and animations
+            window.scrollTo(0, 0);
+        }
+
+        // --- Event Listeners ---
+        markAsReadButton.addEventListener('click', () => {
+            if (!currentBookId) return;
+            const bookRef = appState.books.find(b => b.id === currentBookId);
+            const bookDataRef = booksData.find(b => b.id === currentBookId);
+
+            if (bookRef && !bookRef.completed) {
+                bookRef.completed = true;
+                const xpEarned = bookDataRef.xpValue || 10;
+                appState.totalXP += xpEarned;
+                markAsReadButton.disabled = true;
+                markAsReadButton.textContent = 'Content Explored';
+                showXPPopup(xpEarned);
+                updateGlobalProgress();
+                saveState();
+            }
+        });
+
+        backButtonBottom.addEventListener('click', showMenu);
+
+        // --- Initialization ---
+        currentYearSpan.textContent = new Date().getFullYear();
+        loadState();
+        populateMenu();
+        updateGlobalProgress();
+
+    </script>
+</body>
+</html>
